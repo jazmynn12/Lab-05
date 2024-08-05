@@ -1,12 +1,16 @@
 /** 
- *Lab Number: 2
+ *Lab Number: 3
  *Name: Mira Haldar and Jazmyne Newman
  *This file defines the abstract Currency class 
+ Changes from lab 2: 
+ Made the class abstract by turning getCurrencyName() into a purely virtual method
+ turned references to Currency objects into constant references to Currency objects 
+
  */
 #include <iostream> 
 #include <string> 
 #include <stdexcept> 
-#pragma once
+#pragma once 
 class Currency { 
     private: 
         int amountwhole, amountfrac; 
@@ -24,20 +28,28 @@ class Currency {
             
             amountfrac = stoi(std::to_string(a)) ; //attempting to prevent round down error 
     }
-    Currency(Currency & other){ 
-        amountwhole = other.getAmountWhole(); 
+    Currency(const Currency & other){ 
+    	amountwhole = other.getAmountWhole(); 
         amountfrac = other.getAmountFrac(); 
         
     }
-    virtual std::string getCurrencyName(){return " ";}
+    virtual std::string getCurrencyName() const = 0;  //changed this to purely virtual, making currency an abstract class 
     int getAmountWhole() const { 
         return amountwhole; 
     } 
     int getAmountFrac() const{ 
         return amountfrac; 
     }
-    //add exception handling instead of if statements lol 
-    void add(Currency& other) {
+/**
+ Adds the values of another Currency object to this Currency object.
+ *
+ * pre: other- Currency object
+ * post: The amountwhole and amountfrac of this Currency object are increased
+ *       by the amountwhole and amountfrac of the other Currency object.
+ *       Throws invalid argument exception if the two objects are not of the same currency type
+ * return: void
+ */
+    void add(const Currency& other) {
         if(!isSameType(other)){ 
             throw std::invalid_argument("Invalid addition");
         } 
@@ -48,14 +60,22 @@ class Currency {
             amountwhole++; 
         }
     }
-    void subtract(Currency& other) {
+/**
+Subtracts the values of another Currency object from this Currency object.
+ *
+ * pre: other- Currency object
+ * post: The amountwhole and amountfrac of the other Currency object are subtracted from the amountwhole and amountfrac of the other Currency object.
+ *       Throws invalid argument exception if the two objects are not of the same currency type OR if the subtraction results in a negative value
+ * return: void
+ */
+    void subtract(const Currency & other) {
         if(!isSameType(other))
         { 
             throw std::invalid_argument("Invalid subtraction"); 
         }
         int otherwhole = other.getAmountWhole(); 
         int otherfrac = other.getAmountFrac(); 
-        if(otherwhole > amountwhole || otherwhole == amountwhole && otherfrac> amountfrac){
+        if(other.isGreater(*this)){
             throw std::invalid_argument("Invalid subtraction"); 
         }
         amountwhole -= other.getAmountWhole();
@@ -65,25 +85,50 @@ class Currency {
             amountfrac = 100 - amountfrac; 
         }
     }
-    bool isSameType( Currency& other) {  
+/**
+ Checks whether a Currency object matches the currency type of this one
+ * pre: other- Currency object
+ * post: 
+ * return: true or false
+ */
+    bool isSameType( const Currency & other) const{  
         return other.getCurrencyName() == getCurrencyName(); 
     }
-    bool isEqual(Currency & other){ 
+/**
+Checks whether the values of another Currency object equals this one
+ *
+ * pre: other- Currency object
+ * post: Throws invalid argument exception if the two objects are not of the same currency type
+ * return: true or false
+ */
+    bool isEqual(const Currency & other) const{ 
         if (!isSameType(other) ) { 
             throw std::invalid_argument("Invalid comparison"); 
         }
         return (other.getAmountFrac() == amountfrac && other.getAmountWhole() == amountwhole); 
     }
-    bool isGreater(Currency & other){ 
-        bool isEqual = false; 
-        if (isSameType(other) ) { 
+/**
+Compares a Currency object to identify which object is larger or smaller.
+ *
+ * pre: other- Currency object
+ * post:Throws invalid argument exception if the two objects are not of the same currency type
+ * return: true or false
+ */
+    bool isGreater(const Currency & other) const{ 
+        bool isGreater = false; 
+        if (!isSameType(other) ) { 
             throw std::invalid_argument("Invalid comparison"); 
         }
-            isEqual = (other.getAmountWhole() <  amountwhole) || (other.getAmountFrac() <  amountfrac && other.getAmountWhole() == amountwhole ); 
+            isGreater = (other.getAmountWhole() <  amountwhole) || (other.getAmountFrac() <  amountfrac && other.getAmountWhole() == amountwhole ); 
         
-        return isEqual; 
+        return isGreater; 
     }
-    std::string toString(){ 
+    /* returns the name and value of the Currency object 
+    pre: 
+    post: 
+    return: a string in the form "xx.yy" followed by the derived currency name 
+    */
+    std::string toString () const{ 
         std::string info; 
         if(amountfrac< 10){ 
             info = std::to_string(amountwhole) + ".0" + std::to_string(amountfrac) + " " + getCurrencyName(); 
